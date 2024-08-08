@@ -114,6 +114,9 @@ window.scanner.Camera = function(classConfig={})
             return new Promise((resolve) => {
                 context.gravador.onloadeddata = () => {
                     console.log('Objeto Camera iniciado');
+                    if( context.autorizado != undefined && typeof context.autorizado == 'function' ){
+                        context.autorizado(context);
+                    }
                     resolve();
                 };
             });
@@ -156,12 +159,40 @@ window.scanner.Camera = function(classConfig={})
     context.lerSaida = function(){
         if(context.inicializado == false){ throw 'O objeto precisa estar iniciado!' };
 
-        if (context.gravador.readyState === context.gravador.HAVE_ENOUGH_DATA) {
-            context.canvasContext.drawImage(context.gravador, 0, 0, context.canvas.width, context.canvas.height);
-        } 
-        
-        return scanner.pagina.ResultadoCamera({
-            canvas_resultado: context.canvas
+        return new Promise(function(resolve){
+            if (context.gravador.readyState === context.gravador.HAVE_ENOUGH_DATA) {
+                context.canvasContext.drawImage(context.gravador, 0, 0, context.canvas.width, context.canvas.height);
+            } 
+            
+            scanner.pagina.ResultadoCamera({
+                canvas_resultado: context.canvas
+
+            }).then(function(resultadoResultado){
+                
+                resolve(resultadoResultado);
+
+            });
+        })
+    }
+
+    /**
+    * Obtem N imagens internas do tipo ResultadoCamera
+    * @returns {scanner.pagina.ResultadoCamera}
+    */
+    context.lerSaidas = function(quantidadeOutputs){
+        return new Promise(function(resolve){
+            if(context.inicializado == false){ throw 'O objeto precisa estar iniciado!' };
+            
+            let saidas = [];
+            for( let i = 0 ; i < quantidadeOutputs ; i++ )
+            {   
+                context.lerSaida()
+                        .then(function(imagemLida){
+                            saidas.push( imagemLida.getImagem() );
+                        })
+            }
+    
+            resolve(saidas);
         });
     }
 
