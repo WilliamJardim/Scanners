@@ -36,6 +36,97 @@ scanner.Base = function(config){
         return confereSePodeMexe == true ? true : false;
     }
 
+    /**
+    * Percorre os niveis de um objeto para retornar uma função ou atributo
+    * Ex:
+    *    context.percorrerNiveisEObterFuncao('a.qualquerCoisa', {a: { qualquerCoisa: 'aaa' } } )
+    *    
+    *    retornaria 'aaa'
+    * 
+    * @param {String} strPassada 
+    * @param {Object} objeto 
+    * @returns {any}
+    */
+    context.percorrerNiveisEObter = function(strPassada, objeto){
+        let dividePontos = strPassada.split('.');
+        let primeiroNivel = dividePontos[0];
+        let nivelAtual = objeto[ primeiroNivel ] || undefined;
+
+        if( nivelAtual == undefined ){
+            return undefined;
+        }
+
+        let nomeFuncaoProcurando = dividePontos[ dividePontos.length-1 ];
+
+        if( primeiroNivel == nomeFuncaoProcurando ){
+            return nivelAtual;
+        }
+
+        for( let i = 1 ; i < dividePontos.length ; i++ )
+        {
+            let valorAtual = dividePontos[i];
+            
+            if( nivelAtual[valorAtual] != undefined )
+            {
+                if( valorAtual == nomeFuncaoProcurando ){
+                    nivelAtual = nivelAtual[valorAtual];
+                    break;
+                }
+
+                nivelAtual = nivelAtual[valorAtual];
+            }
+        }
+
+        return nivelAtual
+    }
+
+    /**
+     * Converte um dicionario com strings:funcao, em um dicionario de dicionarios, que contem a função
+     * ex
+     *   {
+     *     'object.subtipo.tipo: function(){}
+     *   }
+     */
+    context.transformarCallbacksStringEmObjetos = function(callbacksObjString){
+        let objetoTratado = {};
+        let keys = Object.keys(callbacksObjString);
+
+        for( let i = 0 ; i < keys.length ; i++ )
+        {
+            const caminhoString = keys[i];
+            const caminhoDividido = caminhoString.split('.');
+
+            let primeiroElemento = caminhoDividido[0];
+
+            if( objetoTratado[ primeiroElemento ] == undefined )
+            {
+                objetoTratado[ primeiroElemento ] = {};
+            }
+            let nivelAtualCaminhoAtual = objetoTratado[ primeiroElemento ];
+
+            let ultimoElemento = caminhoDividido[ caminhoDividido.length-1 ];
+
+            //Percorre a profundidado do primeiro ao ultimo
+            for( let j = 1 ; j < caminhoDividido.length ; j++ )
+            {
+                const parteCaminhoAtual = caminhoDividido[j];
+
+                if( parteCaminhoAtual == ultimoElemento ){
+                    nivelAtualCaminhoAtual[ parteCaminhoAtual ] = callbacksObjString[caminhoString];
+                }else{
+                    if( nivelAtualCaminhoAtual[ parteCaminhoAtual ] == undefined )
+                    {
+                        nivelAtualCaminhoAtual[ parteCaminhoAtual ] = {};
+                    }
+                }
+
+                nivelAtualCaminhoAtual = nivelAtualCaminhoAtual[ parteCaminhoAtual ]
+            }
+        }
+
+        return objetoTratado;
+    }
+
     context.copyArgs = function(config){
         //Copia os argumentos
         let configKeys = Object.keys(config);
@@ -395,10 +486,13 @@ scanner.utils = {
             }
         }
 
+        let porcentagem = (equal*100) / (A.length - ignored);
+
         return { 
                  equal: equal, 
                  different: different,
-                 bateu: (equal*100) / (A.length - ignored) >= porcentagemAceito
+                 percentage: porcentagem,
+                 bateu: porcentagem >= porcentagemAceito
                };
     },
 
@@ -746,27 +840,6 @@ scanner.pagina = {
                 resolve(context);
             } );
         });
-    },
-
-    /**
-    * Fornece um objeto simples para armazenar os resultados de multipliplas saidas da camera
-    * Permitindo facilmente obter informações, apenas pra isso
-    * @param {Object} classConfig 
-    * @returns {scanner.pagina.ResultadoCamera}
-    */
-    ResultadosCamera: async function(classConfig){
-        const context = scanner.Base( classConfig );
-        context.resultados = classConfig['resultados'] || [];
-
-        context.incluir = function(resultado){
-            context.resultados.push(resultado);
-        }
-
-        context.getImagens = function(){
-            return context.resultados;
-        }
-
-        return context;
     },
 
     /**
