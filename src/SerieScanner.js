@@ -40,6 +40,14 @@ window.scanner.SerieScanner = function(classConfig)
     //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
     context.tempoAguardarRetornarImagem = classConfig['sentinel_options']['imageResponseTime'] || 1000;
 
+    context.increaseImageResponseTime = function(quantoAumentar=1){
+        context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem + quantoAumentar;
+    }
+
+    context.decreaseImageResponseTime = function(quantoDiminuir=1){
+        context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem - quantoDiminuir;
+    }
+
     context.info = {
         scanning: false,
         scansCount: 0,

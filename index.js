@@ -14,13 +14,37 @@ var camera = scanner.Camera({
             //Configurações de template
             template: {
                 templates: [],
+
+                /**
+                * Quantidade de imagens a serem usadas como template 
+                */
                 template_quantity: 5,
+
+                /**
+                * Se vai manter os templates antigos ao capturar novos templates ou não
+                * caso seja 'true', ele vai manter os futuros novos templates 
+                * caso seja 'false', vai apenas sobrescrever os templates atuais pelos futuros novos templates 
+                */
                 keepOldTemplates: false,
 
-                //Configura que o template será captado ao vivo
+                /*
+                * Configura que o template será captado ao vivo
+                */
                 live_template: {
+                    /**
+                    * Indica que vamos capturar os primeiros templates ao vivo
+                    */
                     enabled: true,
+
+                    /**
+                    * Vai esperar 2 segundos para capturar os primeiros templates
+                    */
                     wait_time: 2000,
+
+                    /**
+                    * Resforça que serão 5 templates
+                    * sobrescreve o template_quantity
+                    */
                     quantity: 5
                 }
             },
@@ -69,7 +93,7 @@ var camera = scanner.Camera({
                 },
 
                 'scanner.currentTime.whenInsuficientResponseTime': function(contextoScannner, resultadosAtuais){
-
+                    
                 },
 
                 'scanner.currentTime.afterScan': function(contextoScannner, resultadosAtuais){
