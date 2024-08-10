@@ -11,16 +11,27 @@ var camera = scanner.Camera({
         window.scan = window.scanner.SerieScanner({
             camera: camera, //A camera criada
 
-            template_quantity: 5,
-            keepOldTemplates: false,
-            test_quantity: 3,
-            acceptable_percent: 40, //No minimo 55%
+            //Configurações de template
+            template: {
+                templates: [],
+                template_quantity: 5,
+                keepOldTemplates: false,
 
-            //Configura que o template será captado ao vivo
-            live_template: {
-                enabled: true,
-                wait_time: 2000,
-                quantity: 5
+                //Configura que o template será captado ao vivo
+                live_template: {
+                    enabled: true,
+                    wait_time: 2000,
+                    quantity: 5
+                }
+            },
+
+            //Configurações de observação
+            sentinel_options: {
+                test_quantity: 3,
+                acceptable_percent: 40, //No minimo 55%
+                monitoring: true,
+                monitoringSpeed: 3000,
+                imageResponseTime: 1000
             },
 
             callbacks: {
@@ -47,12 +58,7 @@ var camera = scanner.Camera({
                 'scanner.currentTime.ifNobodyMatch': function(contextoScannner, resultadosAtuais){
                     
                 }
-            },
-
-            //Ja inicia monitorando
-            monitoring: true,
-            monitoringSpeed: 3000,
-            imageResponseTime: 1000
+            }
         });
     }
 });

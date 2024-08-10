@@ -10,26 +10,35 @@ window.scanner.SerieScanner = function(classConfig)
 {
     const context = window.scanner.Base(classConfig);
 
+    if( classConfig['sentinel_options'] == undefined ){
+        throw 'sentinel_options config is not defined';
+    }
+    if( classConfig['template'] == undefined ){
+        throw 'template config is not defined';
+    }
+
     //Variaveis
     context.camera                      = classConfig['camera'] || null;
-    context.quantidadeImagensTemplate   = classConfig['template_quantity'] || 5;
-    context.initialTemplateCapture      = classConfig['live_template'] || null;
-    context.quantidadeImagensTeste      = classConfig['test_quantity'] || 3;
-    context.porcentagem_acerto          = classConfig['acceptable_percent'] || 80; //% de semelhança exigida
+    
+    context.quantidadeImagensTemplate   = classConfig['template']['template_quantity'];
+    context.initialTemplateCapture      = classConfig['template']['live_template'];
+    context.quantidadeImagensTeste      = classConfig['sentinel_options']['test_quantity'];
+    context.porcentagem_acerto          = classConfig['sentinel_options']['acceptable_percent']; //% de semelhança exigida
+    
     context.customCallbacks             = classConfig['callbacks'] || {};
 
     if( Object.keys(classConfig['callbacks'])[0].indexOf('.') != -1 ){
         context.customCallbacks = context.transformarCallbacksStringEmObjetos(context.customCallbacks);
     }
 
-    context.liveMonitoring              = classConfig['monitoring'] || false;
-    context.template_appending          = classConfig['keepOldTemplates'] || false;
+    context.liveMonitoring              = classConfig['sentinel_options']['monitoring'] || false;
+    context.template_appending          = classConfig['template']['keepOldTemplates'] || false;
 
     //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
-    context.mainThread_speed            = classConfig['monitoringSpeed'] || 1000;
+    context.mainThread_speed            = classConfig['sentinel_options']['monitoringSpeed'] || 1000;
 
     //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
-    context.tempoAguardarRetornarImagem = classConfig['imageResponseTime'] || 1000;
+    context.tempoAguardarRetornarImagem = classConfig['sentinel_options']['imageResponseTime'] || 1000;
 
     context.info = {
         scanning: false,
