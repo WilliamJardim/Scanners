@@ -16,7 +16,7 @@ var camera = scanner.Camera({
             test_quantity: 3,
             acceptable_percent: 40, //No minimo 55%
 
-            //Configura que o template
+            //Configura que o template será captado ao vivo
             live_template: {
                 enabled: true,
                 wait_time: 2000,
@@ -51,9 +51,7 @@ var camera = scanner.Camera({
 
             //Ja inicia monitorando
             monitoring: true,
-            //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
             monitoringSpeed: 3000,
-            //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
             imageResponseTime: 1000
         });
     }

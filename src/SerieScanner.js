@@ -248,21 +248,35 @@ window.scanner.SerieScanner = function(classConfig)
     }
 
     context.start = function(){
+        context.dispararCallbackPersonalizado('scanner.beforeStart');
         context._mainTheadID = window.setInterval(function(){
             context.info.scanning = true;
             context.mainThread();  
             context.info.lastStartTime = new Date().getTime();
+            context.dispararCallbackPersonalizado('scanner.afterStart');
 
         }, context.mainThread_speed);
+
+        return context;
     }
 
     context.stop = function(){
+        context.dispararCallbackPersonalizado('scanner.beforeStop');
         if( context._mainTheadID ){
             context.info.scanning = false;
             context.info.consecutiveScans = 0;
             context.info.lastEndTime = new Date().getTime();
             window.clearInterval(context._mainTheadID);
+            context.dispararCallbackPersonalizado('scanner.afterStop');
         }
+        return context;
+    }
+
+    context.clearTemplates = function(){
+        context.dispararCallbackPersonalizado('scanner.beforeClearTemplates');
+        context.templates = [];
+        context.dispararCallbackPersonalizado('scanner.afterClearTemplates');
+        return context;
     }
 
     if( context.liveMonitoring == true ){
