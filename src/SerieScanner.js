@@ -184,6 +184,18 @@ window.scanner.SerieScanner = function(classConfig)
                     resultados: resultadosUltimaAnalise
                 });
 
+                /*
+                * Se não vier imagem nenhuma, é problema de Timeout
+                * este callback será chamado se aparantemente o tempo de resposta da imagem não foi suficiente
+                * ou seja, caso as imagens do escaneamento atual ainda não estejam prontas para leitura
+                */
+                if( resultadosUltimaAnalise.length == 0 )
+                {
+                    context.dispararCallbackPersonalizado('scanner.currentTime.whenInsuficientResponseTime', {
+                        resultados: resultadosUltimaAnalise
+                    });
+                }
+
                 //Para cada tentantiva
                 let quantidadesBateram = 0;
                 for( let j = 0 ; j < resultadosUltimaAnalise.length ; j++ )

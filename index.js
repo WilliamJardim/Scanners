@@ -25,18 +25,51 @@ var camera = scanner.Camera({
                 }
             },
 
-            //Configurações de observação
+            /*
+            * Configurações de observação
+            */
             sentinel_options: {
+                /**
+                * Quantidade de imagens que ele vai bater,
+                * para começar a analisar
+                * use uma quantidade suficiente pra escanear bem o ambiente atual
+                */
                 test_quantity: 3,
-                acceptable_percent: 40, //No minimo 55%
+
+                /**
+                * Porcentagem aceita para ser validado como uma identificação
+                * No minimo 40%
+                */
+                acceptable_percent: 40,
+
+                /**
+                * Já inicia o monitoramento com o template atual(que estiver cadastrado)
+                */
                 monitoring: true,
+
+                /**
+                * A cada 3 segundos ele bate uma foto
+                */
                 monitoringSpeed: 3000,
+                
+                /**
+                * Depois que essa foto é obtida, 
+                * ele aguarda mais 1 segundo 
+                * para só então começar a processar a imagem 
+                */
                 imageResponseTime: 1000
             },
 
+            /**
+            * Funções personalizadas para tratar situações 
+            */
             callbacks: {
                 'object.afterInitialization': function(contextoScannner, resultadosAtuais){
                     
+                },
+
+                'scanner.currentTime.whenInsuficientResponseTime': function(contextoScannner, resultadosAtuais){
+
                 },
 
                 'scanner.currentTime.afterScan': function(contextoScannner, resultadosAtuais){
