@@ -40,6 +40,8 @@ window.scanner.SerieScanner = function(classConfig)
     //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
     context.tempoAguardarRetornarImagem = classConfig['sentinel_options']['imageResponseTime'] || 1000;
 
+    context.stopCriterius               = classConfig['sentinel_options']['stopCriterius'] || {mode: 'someone', criterius: []};
+
     context.increaseImageResponseTime = function(quantoAumentar=1){
         context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem + quantoAumentar;
     }
@@ -101,6 +103,54 @@ window.scanner.SerieScanner = function(classConfig)
         }
 
         return null;
+    }
+
+    /**
+    * Verifica se um ou mais critérios de parada foram atendidos
+    * Em caso afirmativo, ele vai interromper o scanner, encerrando o escaneamento
+    * NOTA: os critérios serão sempre verificados após o final de cada escaneamento
+    * NOTA: A função de um critério de parada precisa retornar a String 'stop' para ele interromper o escaneamento
+    * @returns {Boolean}
+    */
+    context.verificarCriteriosDeParada = function(){
+        let quantidadeBateram = 0;
+        for( let i = 0 ; i < context.stopCriterius.criterius.length ; i++ )
+        {
+            if( context.stopCriterius.criterius[i] != undefined &&
+                context.stopCriterius.criterius[i] != null &&
+                context.stopCriterius.criterius[i] != false &&
+                typeof context.stopCriterius.criterius[i] == 'function'
+            ){
+                const funcaoChamar = context.stopCriterius.criterius[i].bind(context);
+
+                if( funcaoChamar( context, context.getStatus() ) == 'stop' )
+                {
+                    quantidadeBateram++;
+                }
+            }
+        }
+
+        let vaiParar = false;
+        switch(context.stopCriterius.mode)
+        {
+            case 'someone':
+                if( quantidadeBateram > 0 ){
+                    vaiParar = true;
+                }
+                break;
+
+            case 'all':
+                if( quantidadeBateram == context.stopCriterius.criterius.length ){
+                    vaiParar = true;
+                }
+                break;
+        }
+
+        if(vaiParar == true){
+            context.stop();
+        }
+
+        return vaiParar;
     }
 
     context.dispararCallbackPersonalizado('object.beforeInitialization');
@@ -251,6 +301,9 @@ window.scanner.SerieScanner = function(classConfig)
     
                 context.info.consecutiveScans++;
                 context.info.scansCount++;
+
+                //Verifica os critérios de parada
+                context.verificarCriteriosDeParada();
                 
             }, context.tempoAguardarRetornarImagem);
 

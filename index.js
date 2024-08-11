@@ -81,7 +81,34 @@ var camera = scanner.Camera({
                 * ele aguarda mais 1 segundo 
                 * para só então começar a processar a imagem 
                 */
-                imageResponseTime: 1000
+                imageResponseTime: 1000,
+
+                stopCriterius: {
+                    /**
+                    * Modo do stopCriterius
+                    * 'someone' significa SE ALGUM BATER
+                    * 'all' significa que todos precisam bater
+                    */
+                    mode: 'someone',
+
+                    /**
+                    * Crítérios de paradas, sepadados por virgula
+                    * cada uma dessas funções vai ser executada em ordem sequencial,
+                    * e a primeira que bater, vai interromper o scanner
+                    * 
+                    * NOTA: os critérios serão sempre verificados após o final de cada escaneamento
+                    * NOTA: A função de um critério de parada precisa retornar a String 'stop' para ele interromper o escaneamento
+                    */
+                    criterius: [
+                        function(scannerContext, scannerStatus){
+                            if( scannerStatus.scansCount > 1 )
+                            {
+                                console.log('ABACOU O LIMITE');
+                                return 'stop';
+                            }
+                        }
+                    ]
+                }
             },
 
             /**
