@@ -42,6 +42,48 @@ window.scanner.SerieScanner = function(classConfig)
 
     context.stopCriterius               = classConfig['sentinel_options']['stopCriterius'] || {mode: 'someone', criterius: []};
 
+    context.lastResults = null;
+    context.getLast = function(){
+        return context.lastResults;
+    }
+
+    //Configurações de logging
+    context.logger                      = classConfig['logger'] || { history:false };
+    context.logger._history = [];
+
+    /**
+    * Obtem o histórico de escaneamentos 
+    * @returns {Array}
+    */
+    context.logger.getHistory = function(){
+        return context.logger._history;
+    }
+    context.getHistory = context.logger.getHistory;
+
+
+    /**
+    * Adiciona uma informação ao histórico
+    * @param {Object} informacoesObj
+    * @returns 
+    */
+    context.logger.logHistory = function(informacoesObj){
+        if( context.logger.history == true ){
+            context.logger._history.push( informacoesObj );
+        }
+        return context;
+    }
+    context.logHistory = context.logger.logHistory;
+
+
+    /**
+    * Sobrescreve o histórico
+    * @param {Array} novoHistorico 
+    */
+    context.logger.setHistory = function(novoHistorico){
+        context.logger._history = novoHistorico;
+    }
+
+
     context.increaseImageResponseTime = function(quantoAumentar=1){
         context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem + quantoAumentar;
     }
@@ -51,13 +93,23 @@ window.scanner.SerieScanner = function(classConfig)
     }
 
     context.info = {
+        scannerRef: context,
+        logger: context.logger,
         scanning: false,
         scansCount: 0,
         consecutiveScans: 0,
         matchCount: 0,
         consecutiveMatchCount: 0,
         notMatchCount: 0,
-        consecutiveNotMatchCount: 0
+        consecutiveNotMatchCount: 0,
+
+        getLogger: function(){
+            return this.logger;
+        },
+
+        getScanner: function(){
+            return this.scannerRef
+        }
     }
 
     context.getStatus = function(){
@@ -183,6 +235,8 @@ window.scanner.SerieScanner = function(classConfig)
     context.compararImagensObtidas = async function(){
         return new Promise(function(resolve){
             let resultados = [];
+            let somaEqual = 0;
+            let somaDiff = 0;
 
             for( let i = 0 ; i < context.templates.length ; i++ )
             {
@@ -194,6 +248,8 @@ window.scanner.SerieScanner = function(classConfig)
 
                     scanner.utils.semelhancaImagems(fotoTemplateAtual, fotoTestandoAtual, context.porcentagem_acerto)
                     .then(function(resultadoAnalise){
+                        somaEqual = somaEqual + resultadoAnalise['equal'];
+                        somaDiff  = somaDiff  + resultadoAnalise['different'];
                         resultados.push(resultadoAnalise);
                     });
                 }
@@ -205,6 +261,13 @@ window.scanner.SerieScanner = function(classConfig)
 
                 if( resultados.length >= quantidadeEsperada || quantidadeAguardos > 20000){
                     clearInterval(timerChecagem);
+                    
+                    //Armazena a média
+                    resultados.equalSum = somaEqual;
+                    resultados.equalMean = (somaEqual / resultados.length);
+                    resultados.differentMean = (somaDiff / resultados.length);
+                    resultados.percentageMean = ( (somaEqual*100) / ( Math.abs(somaDiff + somaEqual) ));
+
                     resolve(resultados);
                 }
 
@@ -253,6 +316,17 @@ window.scanner.SerieScanner = function(classConfig)
                         resultados: resultadosUltimaAnalise
                     });
                 }
+
+                if( context.logger.history == true )
+                {
+                    resultadosUltimaAnalise['time']           = new Date().getTime();
+                    resultadosUltimaAnalise['description']    = `scan-${resultadosUltimaAnalise['time']}`;
+                    resultadosUltimaAnalise['equalMean']      = resultadosUltimaAnalise['equalMean'];
+                    resultadosUltimaAnalise['differentMean']  = resultadosUltimaAnalise['differentMean'];
+                    resultadosUltimaAnalise['percentageMean'] = resultadosUltimaAnalise['percentageMean'];
+                    context.logger.logHistory(resultadosUltimaAnalise);
+                }
+                context.lastResults = {... resultadosUltimaAnalise};
 
                 //Para cada tentantiva
                 let quantidadesBateram = 0;

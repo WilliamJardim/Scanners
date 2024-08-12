@@ -112,6 +112,17 @@ var camera = scanner.Camera({
             },
 
             /**
+            * Armazena informações de logging 
+            */
+            logger: {
+                /**
+                * Sinaliza que vamos usar um histórico
+                * para armazenar os resultados dos escaneamentos na memória 
+                */
+                history: true
+            },
+
+            /**
             * Funções personalizadas para tratar situações 
             */
             callbacks: {
