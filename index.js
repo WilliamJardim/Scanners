@@ -135,7 +135,7 @@ var camera = scanner.Camera({
                 },
 
                 'scanner.currentTime.afterScan': function(contextoScannner, resultadosAtuais){
-
+                    
                 },
 
                 'scanner.currentTime.whenSomeoneMatch': function(contextoScannner, resultadosAtuais){

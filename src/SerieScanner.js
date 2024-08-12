@@ -215,7 +215,7 @@ window.scanner.SerieScanner = function(classConfig)
     context.dispararCallbackPersonalizado('object.beforeInitialization');
 
     //Obtem as imagens template
-    context.templates = classConfig['templates'] || [];
+    context.templates = (classConfig['template'] || {})['templates'] || [];
     context.obterTemplate = async function(){
         context.dispararCallbackPersonalizado('template.beforeCapture');
 
@@ -293,6 +293,83 @@ window.scanner.SerieScanner = function(classConfig)
             setTimeout(async() => {
                 const resultados = await context.compararImagensObtidas();
                 resolve(resultados);
+            }, 1500);
+        });
+    }
+
+    /**
+    * Faz uma analise de N imagens, de forma independente
+    * @param {Array} samplesAsTemplate 
+    * @returns {Object}
+    */
+    context.analizeSamples = function(samplesAsTemplate){
+        return new Promise(function(resolve){
+
+            const scanner_a_parte = scanner.SerieScanner({
+                camera: context.camera, //A mesma camera criada
+
+                template: {
+                    templates: context.templates,
+
+                    /**
+                    * Quantidade de imagens a serem usadas como template 
+                    */
+                    template_quantity: context.quantidadeImagensTemplate,
+
+                    keepOldTemplates: false
+                },
+
+                sentinel_options: {
+                    /**
+                    * Quantidade de imagens que ele vai bater,
+                    * para começar a analisar
+                    * use uma quantidade suficiente pra escanear bem o ambiente atual
+                    */
+                    test_quantity: context.quantidadeImagensTeste,
+
+                    /**
+                    * Porcentagem aceita para ser validado como uma identificação
+                    * No minimo 40%
+                    */
+                    acceptable_percent: context.porcentagem_acerto,
+
+                    /**
+                    * Já inicia o monitoramento com o template atual(que estiver cadastrado)
+                    */
+                    monitoring: false,
+
+                    /**
+                    * A cada 3 segundos ele bate uma foto
+                    */
+                    monitoringSpeed: context.mainThread_speed,
+                    
+                    /**
+                    * Depois que essa foto é obtida, 
+                    * ele aguarda mais 1 segundo 
+                    * para só então começar a processar a imagem 
+                    */
+                    imageResponseTime: context.tempoAguardarRetornarImagem
+                },
+
+                callbacks: {
+                    'object.afterInitialization': function(contextoScannner, resultadosAtuais){
+                
+                    }
+                }
+            });
+
+            setTimeout(async() => {
+            
+                //Define as amostras
+                scanner_a_parte.imagensTeste = samplesAsTemplate;
+
+                //Manda analisar estas amostras
+                scanner_a_parte.compararImagensObtidas()
+                .then( function(resultadosAtuais){
+                    resolve(resultadosAtuais);
+                } );
+
+
             }, 1500);
         });
     }
