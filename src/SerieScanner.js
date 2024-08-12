@@ -92,6 +92,9 @@ window.scanner.SerieScanner = function(classConfig)
         context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem - quantoDiminuir;
     }
 
+    /**
+    * Armazena informações sobre o Scanner 
+    */
     context.info = {
         scannerRef: context,
         logger: context.logger,
@@ -112,6 +115,10 @@ window.scanner.SerieScanner = function(classConfig)
         }
     }
 
+    /**
+    * Obtem as informações/estatisticas do Scanner
+    * @returns {Object}
+    */
     context.getStatus = function(){
         return context.info;
     }
