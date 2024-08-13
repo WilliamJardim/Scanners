@@ -216,6 +216,47 @@ window.scanner.SerieScanner = function(classConfig)
 
     //Obtem as imagens template
     context.templates = (classConfig['template'] || {})['templates'] || [];
+    context.templateLabels = [];
+    context.templateLabels.preenchido = false;
+
+    //Se o usuario passar um array de jsons(contendo imagem e label/nome)
+    if( context.templates.length > 0 && 
+        typeof context.templates[0] == 'object' &&
+        context.templates[0].image != undefined &&
+        context.templates[0].label != undefined
+    ){
+        //Extrai só a lista de imagens
+        context.templates = context.templates.map(function(elemento){
+            //Adiciona o label da imagem no Array de labels
+            context.templateLabels.push( elemento.label );
+
+            //Vincula o label com a imagem
+            elemento.image.label = elemento.label;
+
+            return elemento.image;
+        });
+
+        context.templateLabels.preenchido = true;
+    }
+
+    //Se o usuario passar no classConfig um Array de labels como parametro
+    if( classConfig['template']['labels'] != undefined &&
+        classConfig['template']['labels'].length > 0 &&
+        context.templateLabels.preenchido == false
+    ){
+        //Usa os labels passados
+        context.templateLabels = classConfig['template']['labels'];
+        if( context.templateLabels.length != context.templates.length )
+        {
+            throw 'Voce precisa informar N labels para as suas N imagens template!. Um label por imagem';
+        }
+
+        //Vincula o label com a imagem
+        context.templates.forEach(function(elemento, indice){
+            elemento.label = context.templateLabels[indice];
+        });
+    }
+
     context.obterTemplate = async function(){
         context.dispararCallbackPersonalizado('template.beforeCapture');
 
@@ -241,20 +282,30 @@ window.scanner.SerieScanner = function(classConfig)
     //Considera que já temos as imagens template e as imagens de teste carregadas na memoria, então simplismente analisamos uma por uma
     context.compararImagensObtidas = async function(){
         return new Promise(function(resolve){
-            let resultados = [];
+            let resultados = [];          
+            let labelsIdentificados = []; //Uma lista com os labels que foram identificados
             let somaEqual = 0;
             let somaDiff = 0;
 
+            //Para Cada template
             for( let i = 0 ; i < context.templates.length ; i++ )
             {
                 const fotoTemplateAtual = context.templates[i];
 
+                //Para Cada imagem de teste
                 for( let j = 0 ; j < context.imagensTeste.length ; j++ )
                 {
                     const fotoTestandoAtual = context.imagensTeste[j];
 
                     scanner.utils.semelhancaImagems(fotoTemplateAtual, fotoTestandoAtual, context.porcentagem_acerto)
                     .then(function(resultadoAnalise){
+                        //Adiciona o label(se existir um label no template que foi identificado)
+                        resultadoAnalise['label'] = fotoTemplateAtual.label ? fotoTemplateAtual.label : null;
+                        if( fotoTemplateAtual.label != undefined )
+                        {
+                            labelsIdentificados.push( resultadoAnalise['label'] );
+                        }
+
                         somaEqual = somaEqual + resultadoAnalise['equal'];
                         somaDiff  = somaDiff  + resultadoAnalise['different'];
                         resultados.push(resultadoAnalise);
@@ -266,6 +317,7 @@ window.scanner.SerieScanner = function(classConfig)
             const timerChecagem = setInterval( function(){
                 const quantidadeEsperada = context.imagensTeste.length * context.imagensTeste.length;
 
+                //Quando todas as analises atuais acima terminarem
                 if( resultados.length >= quantidadeEsperada || quantidadeAguardos > 20000){
                     clearInterval(timerChecagem);
                     
@@ -274,6 +326,13 @@ window.scanner.SerieScanner = function(classConfig)
                     resultados.equalMean = (somaEqual / resultados.length);
                     resultados.differentMean = (somaDiff / resultados.length);
                     resultados.percentageMean = ( (somaEqual*100) / ( Math.abs(somaDiff + somaEqual) ));
+
+                    //Vincula os labels ao objeto de resultados
+                    resultados.labels = labelsIdentificados || [];
+                    //Cria um getterzinho
+                    resultados.getLabels = function(){
+                        return resultados.labels;
+                    }
 
                     resolve(resultados);
                 }
