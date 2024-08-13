@@ -299,6 +299,8 @@ window.scanner.SerieScanner = function(classConfig)
 
                     scanner.utils.semelhancaImagems(fotoTemplateAtual, fotoTestandoAtual, context.porcentagem_acerto)
                     .then(function(resultadoAnalise){
+                        resultadoAnalise['comparedWith'] = fotoTemplateAtual.label || null;
+
                         //Adiciona o label(se existir um label no template que foi identificado)
                         resultadoAnalise['label'] = (resultadoAnalise['bateu'] == true && fotoTemplateAtual.label != undefined) ? fotoTemplateAtual.label : null;
                         if( resultadoAnalise['label'] != undefined )
