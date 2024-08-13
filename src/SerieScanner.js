@@ -386,10 +386,33 @@ window.scanner.SerieScanner = function(classConfig)
                         //Constroi o histograma, com as porcentagens
                         associacoes[imageLabel][currentLabel] += resultadoAnalise['percentage'];
 
+
+                        //Calcula e atualiza a faixa comum para o template atual
+                        let mediaFaixaComum_esteTemplate = 0;
+                        //Para o template atual, ele vai tirar uma média da porcentagem de semelhança comum
+                        const templateScan = associacoes[imageLabel];
+                        Object.keys(templateScan).forEach(function(keyAtualItem){
+                            const value = templateScan[keyAtualItem];
+
+                            //Ignora a que for 100%
+                            if(value && value != 100)
+                            {
+                                mediaFaixaComum_esteTemplate += value;
+                            }
+
+                        });
+                        //Ali usei -1 por que ignoro o 100(ele mesmo)
+                        associacoes[imageLabel].mediaComum = (mediaFaixaComum_esteTemplate/(Object.keys(templateScan).length - 1));
+                        
+
+
                         //Vincula o histograma de semelhanças no estado atual dele com o template atual
                         fotoTemplateBase.semelhances = {
                             histogram: associacoes[imageLabel]
                         };
+
+                        //Vincula o semelhances atual com o scanner
+                        context.templateSemelhances = associacoes;
 
                         feitos++;
                     });
@@ -407,25 +430,13 @@ window.scanner.SerieScanner = function(classConfig)
                     //Calcula a faixa comum
                     let mediaFaixaComum = 0;
                     let keysRoot = Object.keys(associacoes);
-                    let keysPossibilidades = Object.keys(associacoes[ keysRoot[0] ]);
 
                     //Para cada imagem, ele vai tirar uma média da porcentagem de semelhança comum
                     keysRoot.forEach(function(keyAtualRoot){
                         const rootItem = associacoes[keyAtualRoot];
-
-                        keysPossibilidades.forEach(function(keyAtualItem){
-
-                            const subValue = rootItem[keyAtualItem];
-
-                            //Ignora a que for 100%
-                            if(subValue && subValue != 100)
-                            {
-                                mediaFaixaComum += subValue;
-                            }
-
-                        });
+                        mediaFaixaComum += rootItem['mediaComum'];
                     });
-                    mediaFaixaComum = mediaFaixaComum/keysPossibilidades.length;
+                    mediaFaixaComum = mediaFaixaComum/keysRoot.length;
 
                     //Calcula a média das porcentagens de semelhança, pra descobrir a média delas
                     associacoes.mediaComum = mediaFaixaComum;
