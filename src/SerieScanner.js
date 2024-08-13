@@ -346,6 +346,100 @@ window.scanner.SerieScanner = function(classConfig)
         });
     }
 
+    /**
+    * Classifica automaticamente as imagens de template, para associar elas com outras templates,
+    * Para cada template, ele vai associar com as N imagens template que o template atual mais se pareçe 
+    * 
+    * @returns {Object} - um histograma que mostra para cada template, quais templates são mais parecidos
+    */
+    context.autoClassificarImagensTemplateEntreSi = function(nTemplates=2){
+        return new Promise(function(resolve){
+            //Vai refletir aqui as associações encontradas
+            let associacoes = {};      
+            let feitos = 0;    
+        
+            //Para Cada template
+            for( let i = 0 ; i < context.templates.length ; i++ )
+            {
+                const fotoTemplateBase = context.templates[i];
+
+                //Para Cada imagem de template(novamente)
+                for( let j = 0 ; j < context.templates.length ; j++ )
+                {
+                    const fotoTemplateAtual = context.templates[j];
+
+                    scanner.utils.semelhancaImagems(fotoTemplateBase, fotoTemplateAtual, null)
+                    .then(function(resultadoAnalise){
+                        const imageLabel   = (fotoTemplateBase.label) || 'undefined';
+                        const currentLabel = (fotoTemplateAtual.label) || 'undefined';
+
+                        //Se nao existir o imageLabel no associacoes, cria ele
+                        if( associacoes[imageLabel] == undefined )
+                        {
+                            let objNovo = {};
+                            [... scan.templateLabels].forEach(function(elemento){
+                                objNovo[elemento] = 0;
+                            });
+                            associacoes[imageLabel] = objNovo;
+                        }
+
+                        //Constroi o histograma, com as porcentagens
+                        associacoes[imageLabel][currentLabel] += resultadoAnalise['percentage'];
+
+                        //Vincula o histograma de semelhanças no estado atual dele com o template atual
+                        fotoTemplateBase.semelhances = {
+                            histogram: associacoes[imageLabel]
+                        };
+
+                        feitos++;
+                    });
+                }
+            }
+
+            let quantidadeAguardos = 0;
+            const timerChecagem = setInterval( function(){
+                const quantidadeEsperada = context.templates.length * context.templates.length;
+
+                //Quando todas as analises atuais acima terminarem
+                if( feitos >= quantidadeEsperada || quantidadeAguardos > 20000){
+                    clearInterval(timerChecagem);
+
+                    //Calcula a faixa comum
+                    let mediaFaixaComum = 0;
+                    let keysRoot = Object.keys(associacoes);
+                    let keysPossibilidades = Object.keys(associacoes[ keysRoot[0] ]);
+
+                    //Para cada imagem, ele vai tirar uma média da porcentagem de semelhança comum
+                    keysRoot.forEach(function(keyAtualRoot){
+                        const rootItem = associacoes[keyAtualRoot];
+
+                        keysPossibilidades.forEach(function(keyAtualItem){
+
+                            const subValue = rootItem[keyAtualItem];
+
+                            //Ignora a que for 100%
+                            if(subValue && subValue != 100)
+                            {
+                                mediaFaixaComum += subValue;
+                            }
+
+                        });
+                    });
+                    mediaFaixaComum = mediaFaixaComum/keysPossibilidades.length;
+
+                    //Calcula a média das porcentagens de semelhança, pra descobrir a média delas
+                    associacoes.mediaComum = mediaFaixaComum;
+
+                    resolve(associacoes);
+                }
+
+                quantidadeAguardos++;
+
+            }, 100 );
+
+        });
+    }
+
     //Obtem as imagens aturais e faz uma varredura nessas imagens atuais
     context.analisarCena = async function(){
         return new Promise(function(resolve){
