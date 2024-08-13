@@ -441,6 +441,8 @@ window.scanner.SerieScanner = function(classConfig)
         
         return new Promise(async function(){
             context.dispararCallbackPersonalizado('scanner.currentTime.beforeScan', {});
+            let timeAntes = new Date().getTime();
+
             let resultadosUltimaAnalise = await context.analisarCena();
 
             setTimeout(function(){
@@ -462,7 +464,9 @@ window.scanner.SerieScanner = function(classConfig)
 
                 if( context.logger.history == true )
                 {
-                    resultadosUltimaAnalise['time']           = new Date().getTime();
+                    resultadosUltimaAnalise['startime']       = timeAntes;
+                    resultadosUltimaAnalise['endtime']        = new Date().getTime();
+                    resultadosUltimaAnalise['duration']       = Math.abs( resultadosUltimaAnalise['startime'] - resultadosUltimaAnalise['endtime'] );
                     resultadosUltimaAnalise['description']    = `scan-${resultadosUltimaAnalise['time']}`;
                     resultadosUltimaAnalise['equalMean']      = resultadosUltimaAnalise['equalMean'];
                     resultadosUltimaAnalise['differentMean']  = resultadosUltimaAnalise['differentMean'];
