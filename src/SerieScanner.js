@@ -300,8 +300,8 @@ window.scanner.SerieScanner = function(classConfig)
                     scanner.utils.semelhancaImagems(fotoTemplateAtual, fotoTestandoAtual, context.porcentagem_acerto)
                     .then(function(resultadoAnalise){
                         //Adiciona o label(se existir um label no template que foi identificado)
-                        resultadoAnalise['label'] = fotoTemplateAtual.label ? fotoTemplateAtual.label : null;
-                        if( fotoTemplateAtual.label != undefined )
+                        resultadoAnalise['label'] = (resultadoAnalise['bateu'] == true && fotoTemplateAtual.label != undefined) ? fotoTemplateAtual.label : null;
+                        if( resultadoAnalise['label'] != undefined )
                         {
                             labelsIdentificados.push( resultadoAnalise['label'] );
                         }
