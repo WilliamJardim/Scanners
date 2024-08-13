@@ -47,6 +47,15 @@ window.scanner.SerieScanner = function(classConfig)
         return context.lastResults;
     }
 
+    //Configurações de categorização
+    context.categorize                  = classConfig['categorization'] || {};
+    //Se tiver o categorize habilitado dentro da configuração de template
+    if( classConfig['template']['categorize'] == true ){
+        context.categorize['templates'] = true;
+    }
+    context.categorizeTemplates         = context.categorize['templates'] || false;
+
+    
     //Configurações de logging
     context.logger                      = classConfig['logger'] || { history:false };
     context.logger._history = [];
@@ -691,6 +700,11 @@ window.scanner.SerieScanner = function(classConfig)
 
     if( context.liveMonitoring == true ){
         context.start();
+    }
+
+    //Se for categorizar os templates
+    if( context.categorizeTemplates == true ){
+        context.autoClassificarImagensTemplateEntreSi();
     }
 
     context.dispararCallbackPersonalizado('object.afterInitialization');

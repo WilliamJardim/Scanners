@@ -10,6 +10,12 @@ var camera = scanner.Camera({
         
             //Configurações de template
             template: {
+                /**
+                * Diz para o Scanner associar automaticamente(categorizar) 
+                * com quais templates cada template mais se pareçe 
+                */
+                categorize: true,
+
                 /* Obtem os templates, e atribui um rótulo a eles */
                 templates : [
                     {
@@ -25,11 +31,6 @@ var camera = scanner.Camera({
                         label: 'William 3'
                     }
                 ],
-        
-                /**
-                * Quantidade de imagens a serem usadas como template 
-                */
-                template_quantity: 3,
         
                 /*
                 * Configura que o template será captado ao vivo
