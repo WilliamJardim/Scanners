@@ -18,29 +18,28 @@ window.scanner.SerieScanner = function(classConfig)
     }
 
     //Variaveis
+    context.validation                  = classConfig['validation'] || 'percentage';
+    context.algoritmo                   = classConfig['algorithm'] || 'default';
     context.camera                      = classConfig['camera'] || null;
-    
-    context.quantidadeImagensTemplate   = classConfig['template']['template_quantity'];
-    context.initialTemplateCapture      = classConfig['template']['live_template'];
-    context.quantidadeImagensTeste      = classConfig['sentinel_options']['test_quantity'];
-    context.porcentagem_acerto          = classConfig['sentinel_options']['acceptable_percent']; //% de semelhança exigida
-    
-    context.customCallbacks             = classConfig['callbacks'] || {};
+    context._template                   = classConfig['template'];
+    context._sentinel_options           = classConfig['sentinel_options'];
+    context.quantidadeImagensTemplate   = context._template['template_quantity'];
+    context.initialTemplateCapture      = context._template['live_template'];
+    context.template_appending          = context._template['keepOldTemplates'] || false;
 
-    if( Object.keys(classConfig['callbacks'])[0].indexOf('.') != -1 ){
+    //Callbacks personalizados
+    context.customCallbacks             = classConfig['callbacks'] || {};
+    if( Object.keys(context.customCallbacks)[0].indexOf('.') != -1 )
+    {
         context.customCallbacks = context.transformarCallbacksStringEmObjetos(context.customCallbacks);
     }
 
-    context.liveMonitoring              = classConfig['sentinel_options']['monitoring'] || false;
-    context.template_appending          = classConfig['template']['keepOldTemplates'] || false;
-
-    //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
-    context.mainThread_speed            = classConfig['sentinel_options']['monitoringSpeed'] || 1000;
-
-    //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
-    context.tempoAguardarRetornarImagem = classConfig['sentinel_options']['imageResponseTime'] || 1000;
-
-    context.stopCriterius               = classConfig['sentinel_options']['stopCriterius'] || {mode: 'someone', criterius: []};
+    context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
+    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent']; //% de semelhança exigida
+    context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
+    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000; //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
+    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000; //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
+    context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
 
     context.lastResults = null;
     context.getLast = function(){
@@ -50,14 +49,12 @@ window.scanner.SerieScanner = function(classConfig)
     //Configurações de categorização
     context.categorize                  = classConfig['categorization'] || {};
     //Se tiver o categorize habilitado dentro da configuração de template
-    if( classConfig['template']['categorize'] == true ){
+    if( classConfig['template']['categorize'] == true )
+    {
         context.categorize['templates'] = true;
     }
     context.categorizeTemplates         = context.categorize['templates'] || false;
 
-
-    context.validation                  = classConfig['validation'] || 'percentage';
-    context.algoritmo                   = classConfig['algorithm'] || 'default';
     
     //Configurações de logging
     context.logger                      = classConfig['logger'] || { history:false };
