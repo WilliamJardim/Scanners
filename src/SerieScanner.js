@@ -18,7 +18,7 @@ window.scanner.SerieScanner = function(classConfig)
         throw 'template config is not defined';
     }
 
-    /* Variaveis globais da classe */
+    /* VARIAVEIS DESSA CLASSE ABAIXO: */
     context._template                   = classConfig['template'];
     context.quantidadeImagensTemplate   = context._template['template_quantity'];
     context.initialTemplateCapture      = context._template['live_template'];
@@ -76,18 +76,19 @@ window.scanner.SerieScanner = function(classConfig)
         });
     }
 
+    context.imagensTeste                = [];                                                                              //Vamos usar isso para armazenar as imagens que vamos testar
     context.camera                      = classConfig['camera'] || null;
     context._sentinel_options           = classConfig['sentinel_options'];
     context.validation                  = classConfig['validation'] || 'percentage';
     context.algoritmo                   = classConfig['algorithm'] || 'default';
     context.template_appending          = context._template['keepOldTemplates'] || false;
     context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
-    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent']; //% de semelhança exigida
+    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent'];                                 //% de semelhança exigida
     context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
-    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000; //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
-    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000; //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
+    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000;                            //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
+    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000;                          //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
     context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
-    context.categorize                  = classConfig['categorization'] || context._template['categorize'] || {};     //Configurações de categorização
+    context.categorize                  = classConfig['categorization'] || context._template['categorize'] || {};          //Configurações de categorização
     context.categorizeTemplates         = context.categorize['templates'] || false;
     context.logger                      = classConfig['logger'] || { history:false }; //Configurações de logging
     context.logger._history = [];
@@ -114,6 +115,8 @@ window.scanner.SerieScanner = function(classConfig)
         notMatchCount: 0,
         consecutiveNotMatchCount: 0
     }
+
+    /*** MÉTODOS DESSA CLASSE ABAIXO: ***/
 
     /**
     * Obtém informações sobre o último escaneamento
@@ -154,7 +157,7 @@ window.scanner.SerieScanner = function(classConfig)
     /**
     * Adiciona uma informação ao histórico
     * @param {Object} informacoesObj
-    * @returns 
+    * @returns {Object}
     */
     context.logHistory = function(informacoesObj){
         return context.logger.logHistory(informacoesObj);
@@ -164,6 +167,7 @@ window.scanner.SerieScanner = function(classConfig)
     /**
     * Sobrescreve o histórico
     * @param {Array} novoHistorico 
+    * @returns {null}
     */
     context.logger.setHistory = function(novoHistorico){
         context.logger._history = novoHistorico;
@@ -172,6 +176,7 @@ window.scanner.SerieScanner = function(classConfig)
     /**
     * Aumenta um pouquinho o tempo de espera para retornar a imagem
     * @param {Array} novoHistorico 
+    * @returns {null}
     */
     context.increaseImageResponseTime = function(quantoAumentar=1){
         context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem + quantoAumentar;
@@ -180,6 +185,7 @@ window.scanner.SerieScanner = function(classConfig)
     /**
     * Diminui um pouquinho o tempo de espera para retornar a imagem
     * @param {Array} novoHistorico 
+    * @returns {null}
     */
     context.decreaseImageResponseTime = function(quantoDiminuir=1){
         context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem - quantoDiminuir;
@@ -309,8 +315,10 @@ window.scanner.SerieScanner = function(classConfig)
         context.dispararCallbackPersonalizado('template.afterCapture');
     }
 
-    /* Obtem as imagens de teste */
-    context.imagensTeste = [];
+    /**
+    * Obtem as imagens de teste
+    * @return {null}
+    */
     context.obterTargets = async function(){
         context.dispararCallbackPersonalizado('test.beforeCapture');
         context.imagensTeste = await context.camera.lerSaidas(context.quantidadeImagensTeste);
