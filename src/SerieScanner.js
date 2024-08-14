@@ -55,6 +55,9 @@ window.scanner.SerieScanner = function(classConfig)
     }
     context.categorizeTemplates         = context.categorize['templates'] || false;
 
+
+    context.validation                  = classConfig['validation'] || 'percentage';
+
     
     //Configurações de logging
     context.logger                      = classConfig['logger'] || { history:false };
@@ -289,7 +292,7 @@ window.scanner.SerieScanner = function(classConfig)
     }
 
     //Considera que já temos as imagens template e as imagens de teste carregadas na memoria, então simplismente analisamos uma por uma
-    context.compararImagensObtidas = async function(){
+    context.compararImagensObtidas_por_percentual = async function(){
         return new Promise(function(resolve){
             let resultados = [];          
             let labelsIdentificados = []; //Uma lista com os labels que foram identificados
@@ -346,6 +349,76 @@ window.scanner.SerieScanner = function(classConfig)
                     }
 
                     resolve(resultados);
+                }
+
+                quantidadeAguardos++;
+
+            }, 100 );
+
+        });
+    },
+
+    /**
+    * Muito semelhante ao método anterior, porém, ele faz um histograma das imagens de teste
+    * para destacar quais imagens template mais se pareçem com os templates
+    * @returns {Object}
+    */
+    context.compararImagensObtidas_por_relevancia = async function(){
+        return new Promise(function(resolve){       
+            let somaEqual = 0;
+            let somaDiff = 0;
+            let histograma = {};
+            let feitos = 0;
+
+            //Para Cada teste
+            for( let i = 0 ; i < context.imagensTeste.length ; i++ )
+            {
+                const fotoTestandoAtual = context.imagensTeste[i];
+
+                //Para Cada imagem de template
+                for( let j = 0 ; j < context.templates.length ; j++ )
+                {
+                    const fotoTemplateAtual = context.templates[j];
+
+                    scanner.utils.semelhancaImagems(fotoTestandoAtual, fotoTemplateAtual, Infinity)
+                    .then(function(resultadoAnalise){
+                        const imageTemplateLabel   = (scan.templateLabels[j]) || 'undefined';
+
+                        //Se nao existir o imageLabel no associacoes, cria ele
+                        if( histograma[i] == undefined )
+                        {
+                            let objNovo = {};
+                            [... scan.templateLabels].forEach(function(elemento){
+                                objNovo[elemento] = 0;
+                            });
+                            histograma[i] = objNovo;
+                        }
+
+                        histograma[i][ imageTemplateLabel ] += resultadoAnalise['percentage'];
+                        feitos++;
+
+                        somaEqual = somaEqual + resultadoAnalise['equal'];
+                        somaDiff  = somaDiff  + resultadoAnalise['different'];
+                    });
+                }
+            }
+
+            let quantidadeAguardos = 0;
+            const timerChecagem = setInterval( function(){
+                const quantidadeEsperada = context.imagensTeste.length * context.templates.length;
+
+                //Quando todas as analises atuais acima terminarem
+                if( feitos >= quantidadeEsperada || quantidadeAguardos > 20000){
+                    clearInterval(timerChecagem);
+                    
+                    //Armazena a média
+                    histograma.equalSum = somaEqual;
+                    histograma.equalMean = (somaEqual / context.templates.length);
+                    histograma.differentMean = (somaDiff / context.templates.length);
+                    histograma.percentageMean = ( (somaEqual*100) / ( Math.abs(somaDiff + somaEqual) ));
+
+                    //TODO: tratar como estimativas isoladas ou agregadas
+                    resolve(histograma);
                 }
 
                 quantidadeAguardos++;
@@ -466,7 +539,20 @@ window.scanner.SerieScanner = function(classConfig)
             context.obterTargets();
         
             setTimeout(async() => {
-                const resultados = await context.compararImagensObtidas();
+                let resultados;
+                switch( context.validation ){
+                    case 'percentage':
+                    case 'limiar':
+                        resultados = await context.compararImagensObtidas_por_percentual();
+                        break;
+
+                    case 'mostrelevant':
+                    case 'mostsemelhant':
+                    case 'histogram':
+                        resultados = await context.compararImagensObtidas_por_relevancia();
+                        break;
+                }
+            
                 resolve(resultados);
             }, 1500);
         });

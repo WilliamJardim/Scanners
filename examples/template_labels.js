@@ -5,9 +5,18 @@ var camera = scanner.Camera({
     //Quando o usuario conceder permissão para usar a camera
     autorizado: async function(cameraContext)
     {
+        const foto1 = (await camera.lerSaida()).getImagem();
+        const foto2 = (await camera.lerSaida()).getImagem();
+        const foto3 = (await camera.lerSaida()).getImagem();
+
         window.scan = window.scanner.SerieScanner({
             camera: camera, //A camera criada
         
+            /**
+            * Altera o modo de validação dos resultados 
+            */
+            validation: 'mostrelevant',
+
             //Configurações de template
             template: {
                 /**
@@ -19,15 +28,15 @@ var camera = scanner.Camera({
                 /* Obtem os templates, e atribui um rótulo a eles */
                 templates : [
                     {
-                        image: (await camera.lerSaida()).getImagem(),
+                        image: foto1,
                         label: 'William 1'
                     },
                     {
-                        image: (await camera.lerSaida()).getImagem(),
+                        image: foto2,
                         label: 'William 2'
                     },
                     {
-                        image: (await camera.lerSaida()).getImagem(),
+                        image: foto3,
                         label: 'William 3'
                     }
                 ],
