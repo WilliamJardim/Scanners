@@ -10,6 +10,7 @@ window.scanner.SerieScanner = function(classConfig)
 {
     const context = window.scanner.Base(classConfig);
 
+    /* Validações iniciais */
     if( classConfig['sentinel_options'] == undefined ){
         throw 'sentinel_options config is not defined';
     }
@@ -17,89 +18,22 @@ window.scanner.SerieScanner = function(classConfig)
         throw 'template config is not defined';
     }
 
-    //Variaveis
-    context.validation                  = classConfig['validation'] || 'percentage';
-    context.algoritmo                   = classConfig['algorithm'] || 'default';
-    context.camera                      = classConfig['camera'] || null;
+    /* Variaveis globais da classe */
     context._template                   = classConfig['template'];
-    context._sentinel_options           = classConfig['sentinel_options'];
     context.quantidadeImagensTemplate   = context._template['template_quantity'];
     context.initialTemplateCapture      = context._template['live_template'];
-    context.template_appending          = context._template['keepOldTemplates'] || false;
-    context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
-    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent']; //% de semelhança exigida
-    context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
-    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000; //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
-    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000; //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
-    context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
 
-    //Callbacks personalizados
-    context.customCallbacks             = classConfig['callbacks'] || {};
-    if( Object.keys(context.customCallbacks)[0].indexOf('.') != -1 )
-    {
-        context.customCallbacks = context.transformarCallbacksStringEmObjetos(context.customCallbacks);
-    }
-
-    context.lastResults = null;
-    context.getLast = function(){
-        return context.lastResults;
-    }
-
-    //Configurações de categorização
-    context.categorize                  = classConfig['categorization'] || {};
-    //Se tiver o categorize habilitado dentro da configuração de template
-    if( context._template['categorize'] == true ){ 
-        context.categorize['templates'] = true; 
-    }
-    context.categorizeTemplates         = context.categorize['templates'] || false;
-
-    
-    //Configurações de logging
-    context.logger                      = classConfig['logger'] || { history:false };
-    context.logger._history = [];
-
-    /**
-    * Obtem o histórico de escaneamentos 
-    * @returns {Array}
-    */
-    context.logger.getHistory = function(){
-        return context.logger._history;
-    }
-    context.getHistory = context.logger.getHistory;
-
-
-    /**
-    * Adiciona uma informação ao histórico
-    * @param {Object} informacoesObj
-    * @returns 
-    */
-    context.logger.logHistory = function(informacoesObj){
-        if( context.logger.history == true ){
-            context.logger._history.push( informacoesObj );
+    if( context.initialTemplateCapture && 
+        typeof context.initialTemplateCapture == 'object' 
+    ){   
+        if( context.initialTemplateCapture['quantity'] )
+        {
+            console.warn('Live template capture enabled!');
+            context.quantidadeImagensTemplate = context.initialTemplateCapture['quantity'];
         }
-        return context;
-    }
-    context.logHistory = context.logger.logHistory;
-
-
-    /**
-    * Sobrescreve o histórico
-    * @param {Array} novoHistorico 
-    */
-    context.logger.setHistory = function(novoHistorico){
-        context.logger._history = novoHistorico;
     }
 
-
-    context.increaseImageResponseTime = function(quantoAumentar=1){
-        context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem + quantoAumentar;
-    }
-
-    context.decreaseImageResponseTime = function(quantoDiminuir=1){
-        context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem - quantoDiminuir;
-    }
-
-    //Obtem as imagens template
+    /* Obtem as imagens template passadas como parametro */
     context.templates = (classConfig['template'] || {})['templates'] || [];
     context.templateLabels = [];
     context.templateLabels.preenchido = false;
@@ -142,6 +76,30 @@ window.scanner.SerieScanner = function(classConfig)
         });
     }
 
+    context.camera                      = classConfig['camera'] || null;
+    context._sentinel_options           = classConfig['sentinel_options'];
+    context.validation                  = classConfig['validation'] || 'percentage';
+    context.algoritmo                   = classConfig['algorithm'] || 'default';
+    context.template_appending          = context._template['keepOldTemplates'] || false;
+    context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
+    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent']; //% de semelhança exigida
+    context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
+    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000; //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
+    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000; //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
+    context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
+    context.categorize                  = classConfig['categorization'] || context._template['categorize'] || {};     //Configurações de categorização
+    context.categorizeTemplates         = context.categorize['templates'] || false;
+    context.logger                      = classConfig['logger'] || { history:false }; //Configurações de logging
+    context.logger._history = [];
+    context.customCallbacks             = classConfig['callbacks'] || {}; //Callbacks personalizados
+    
+    if( Object.keys(context.customCallbacks)[0].indexOf('.') != -1 )
+    {
+        context.customCallbacks = context.transformarCallbacksStringEmObjetos(context.customCallbacks);
+    }
+
+    context.lastResults = null;
+
     /**
     * Armazena informações sobre o Scanner 
     */
@@ -154,15 +112,93 @@ window.scanner.SerieScanner = function(classConfig)
         matchCount: 0,
         consecutiveMatchCount: 0,
         notMatchCount: 0,
-        consecutiveNotMatchCount: 0,
+        consecutiveNotMatchCount: 0
+    }
 
-        getLogger: function(){
-            return this.logger;
-        },
+    /**
+    * Obtém informações sobre o último escaneamento
+    * @returns {Object}
+    */
+    context.getLast = function(){
+        return context.lastResults;
+    }
 
-        getScanner: function(){
-            return this.scannerRef
+    /**
+    * Obtem o histórico de escaneamentos 
+    * @returns {Array}
+    */
+    context.logger.getHistory = function(){
+        return context.logger._history;
+    }
+
+    /**
+    * Obtem o histórico de escaneamentos 
+    * @returns {Array}
+    */
+    context.getHistory = function(){
+        return context.logger.getHistory();
+    }
+
+    /**
+    * Adiciona uma informação ao histórico
+    * @param {Object} informacoesObj
+    * @returns 
+    */
+    context.logger.logHistory = function(informacoesObj){
+        if( context.logger.history == true ){
+            context.logger._history.push( informacoesObj );
         }
+        return context;
+    }
+
+    /**
+    * Adiciona uma informação ao histórico
+    * @param {Object} informacoesObj
+    * @returns 
+    */
+    context.logHistory = function(informacoesObj){
+        return context.logger.logHistory(informacoesObj);
+    };
+
+
+    /**
+    * Sobrescreve o histórico
+    * @param {Array} novoHistorico 
+    */
+    context.logger.setHistory = function(novoHistorico){
+        context.logger._history = novoHistorico;
+    }
+
+    /**
+    * Aumenta um pouquinho o tempo de espera para retornar a imagem
+    * @param {Array} novoHistorico 
+    */
+    context.increaseImageResponseTime = function(quantoAumentar=1){
+        context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem + quantoAumentar;
+    }
+
+    /**
+    * Diminui um pouquinho o tempo de espera para retornar a imagem
+    * @param {Array} novoHistorico 
+    */
+    context.decreaseImageResponseTime = function(quantoDiminuir=1){
+        context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem - quantoDiminuir;
+    }
+
+    /**
+    * Retorna o logger
+    * @returns {Object}
+    */
+    context.info.getLogger = function(){
+        return context.logger;
+    }
+
+    /**
+    * Retorna o própio SerieScanner
+    * @returns {context}
+    */
+    context.info.getScanner = function(){
+        return context;
     }
 
     /**
@@ -171,15 +207,6 @@ window.scanner.SerieScanner = function(classConfig)
     */
     context.getStatus = function(){
         return context.info;
-    }
-
-    if( context.initialTemplateCapture && typeof context.initialTemplateCapture == 'object' )
-    {   
-        if( context.initialTemplateCapture['quantity'] )
-        {
-            console.warn('Live template capture enabled!');
-            context.quantidadeImagensTemplate = context.initialTemplateCapture['quantity'];
-        }
     }
 
     /**
@@ -756,24 +783,6 @@ window.scanner.SerieScanner = function(classConfig)
 
     }
 
-    //Se for ter uma captura de templates iniciais
-    if( context.initialTemplateCapture != undefined &&
-        context.initialTemplateCapture != null && 
-        context.initialTemplateCapture != false &&
-        typeof context.initialTemplateCapture == 'object' &&
-        context.initialTemplateCapture['enabled'] == true
-    ){
-        context.dispararCallbackPersonalizado('live_template.beforeCapture');
-
-        //Aguarda o tempo
-        setTimeout( function(){
-            //Obtem as imagens iniciais que serão usadas de base
-            context.obterTemplate();
-            context.dispararCallbackPersonalizado('live_template.afterCapture');
-            
-        }, (context.initialTemplateCapture['wait_time'] || 500) );
-    }
-
     /**
     * Inicia o monitoramento
     * @returns {window.scanner.SerieScanner} - este SerieScanner
@@ -816,6 +825,24 @@ window.scanner.SerieScanner = function(classConfig)
         context.templates = [];
         context.dispararCallbackPersonalizado('scanner.afterClearTemplates');
         return context;
+    }
+
+    /* Se for ter uma captura de templates iniciais */
+    if( context.initialTemplateCapture != undefined &&
+        context.initialTemplateCapture != null && 
+        context.initialTemplateCapture != false &&
+        typeof context.initialTemplateCapture == 'object' &&
+        context.initialTemplateCapture['enabled'] == true
+    ){
+        context.dispararCallbackPersonalizado('live_template.beforeCapture');
+
+        //Aguarda o tempo
+        setTimeout( function(){
+            //Obtem as imagens iniciais que serão usadas de base
+            context.obterTemplate();
+            context.dispararCallbackPersonalizado('live_template.afterCapture');
+            
+        }, (context.initialTemplateCapture['wait_time'] || 500) );
     }
 
     /* Se já for iniciar monitorando, chama o start */
