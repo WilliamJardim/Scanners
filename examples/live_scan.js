@@ -11,6 +11,40 @@ var camera = scanner.Camera({
         window.scan = window.scanner.SerieScanner({
             camera: camera, //A camera criada
 
+            /**
+            * Você pode passar um algoritmo personalizado(em forma de função), que será usado para comparar as imagens
+            * OBS: O algoritmo personalizado precisa ser uma função async e também retornar uma Promise no formato de resultado do Scanners
+            * @param {Image} imagem1 
+            * @param {Image} imagem2 
+            * @param {Number} porcentagemAceito 
+            * @returns {Object}
+            */
+            algorithm: async function(imagem1, imagem2, porcentagemAceito){
+                const A = imagem1 instanceof Array ? imagem1 : (await scanner.utils.extrairPixels(imagem1)).data;
+                const B = imagem2 instanceof Array ? imagem2 : (await scanner.utils.extrairPixels(imagem2)).data;
+                let equal = 0;
+                let different = 0;
+                let ignored = 0;
+
+                for( let i = 0 ; i < A.length ; i++ ){
+                    if(A[i] == B[i]){
+                        equal++
+
+                    } else {
+                        different++;
+                    }
+                }
+
+                let porcentagem = (equal*100) / (A.length - ignored);
+
+                return { 
+                        equal: equal, 
+                        different: different,
+                        percentage: porcentagem,
+                        bateu: porcentagem >= porcentagemAceito
+                    };
+            },
+
             //Configurações de template
             template: {
                 templates : [],

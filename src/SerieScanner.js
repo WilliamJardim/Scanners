@@ -57,7 +57,7 @@ window.scanner.SerieScanner = function(classConfig)
 
 
     context.validation                  = classConfig['validation'] || 'percentage';
-
+    context.algoritmo                   = classConfig['algorithm'] || 'default';
     
     //Configurações de logging
     context.logger                      = classConfig['logger'] || { history:false };
@@ -291,6 +291,27 @@ window.scanner.SerieScanner = function(classConfig)
         context.dispararCallbackPersonalizado('test.afterCapture');
     }
 
+    /**
+    * Função usada para chamar o algoritmo de comparação entre duas imagens
+    * Essa função é usada para tudo dentro dessa classe SerieScanner
+    * Você pode passar um algoritmo personalizado(em forma de função)
+    * OBS: o algoritmo personalizado precisa ser uma função async e também retornar uma Promise no formato de resultado do Scanners
+    * @returns {Promise} 
+    */
+    context.aplicarAlgoritmo = function(imagem1, imagem2, porcentagem_acerto){
+        //Aqui vai a implantação do algoritmo escolhido
+        if( context.algoritmo == 'default' && typeof context.algoritmo == 'string' ){
+            return scanner.utils.semelhancaImagems(imagem1, imagem2, porcentagem_acerto);
+
+        }else{
+            //Permite o usuário configurar o algoritmo que ele quer
+            //OBS: ele precisa ser uma função async e também retornar uma Promise no formato de resultado do Scanners
+            if( typeof context.algoritmo == 'function' ){
+                return context.algoritmo(imagem1, imagem2, porcentagem_acerto);
+            }
+        }
+    }
+
     //Considera que já temos as imagens template e as imagens de teste carregadas na memoria, então simplismente analisamos uma por uma
     context.compararImagensObtidas_por_percentual = async function(){
         return new Promise(function(resolve){
@@ -309,7 +330,7 @@ window.scanner.SerieScanner = function(classConfig)
                 {
                     const fotoTestandoAtual = context.imagensTeste[j];
 
-                    scanner.utils.semelhancaImagems(fotoTemplateAtual, fotoTestandoAtual, context.porcentagem_acerto)
+                    context.aplicarAlgoritmo(fotoTemplateAtual, fotoTestandoAtual, context.porcentagem_acerto)
                     .then(function(resultadoAnalise){
                         resultadoAnalise['comparedWith'] = fotoTemplateAtual.label || null;
 
@@ -380,7 +401,7 @@ window.scanner.SerieScanner = function(classConfig)
                 {
                     const fotoTemplateAtual = context.templates[j];
 
-                    scanner.utils.semelhancaImagems(fotoTestandoAtual, fotoTemplateAtual, Infinity)
+                    context.aplicarAlgoritmo(fotoTestandoAtual, fotoTemplateAtual, Infinity)
                     .then(function(resultadoAnalise){
                         const imageTemplateLabel   = (scan.templateLabels[j]) || 'undefined';
 
@@ -450,7 +471,7 @@ window.scanner.SerieScanner = function(classConfig)
                 {
                     const fotoTemplateAtual = context.templates[j];
 
-                    scanner.utils.semelhancaImagems(fotoTemplateBase, fotoTemplateAtual, null)
+                    context.aplicarAlgoritmo(fotoTemplateBase, fotoTemplateAtual, null)
                     .then(function(resultadoAnalise){
                         const imageLabel   = (fotoTemplateBase.label) || 'undefined';
                         const currentLabel = (fotoTemplateAtual.label) || 'undefined';
@@ -935,6 +956,7 @@ scanner.utils = {
     },
 
     /**
+    * Algoritmo simples para analisar duas imagens, comparando os pixels de ambas
     * @param {Image} imagem1
     * @param {Image} imagem2
     */
