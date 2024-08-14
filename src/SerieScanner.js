@@ -22,7 +22,29 @@ window.scanner.SerieScanner = function(classConfig)
     context._template                   = classConfig['template'];
     context.quantidadeImagensTemplate   = context._template['template_quantity'];
     context.initialTemplateCapture      = context._template['live_template'];
+    context.templates = (classConfig['template'] || {})['templates'] || [];
+    context.templateLabels = [];
+    context.templateLabels.preenchido = false;
+    context.imagensTeste                = [];                                                                              //Vamos usar isso para armazenar as imagens que vamos testar
+    context.camera                      = classConfig['camera'] || null;
+    context._sentinel_options           = classConfig['sentinel_options'];
+    context.validation                  = classConfig['validation'] || 'percentage';
+    context.algoritmo                   = classConfig['algorithm'] || 'default';
+    context.template_appending          = context._template['keepOldTemplates'] || false;
+    context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
+    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent'];                                 //% de semelhança exigida
+    context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
+    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000;                            //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
+    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000;                          //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
+    context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
+    context.categorize                  = classConfig['categorization'] || {};          //Configurações de categorização
+    context.categorizeTemplates         = context.categorize['templates'] || context._template['categorize'] || false;
+    context.logger                      = classConfig['logger'] || { history:false }; //Configurações de logging
+    context.logger._history             = [];
+    context.customCallbacks             = classConfig['callbacks'] || {}; //Callbacks personalizados
+    context.lastResults                 = null;
 
+    /* Alguns pequenos ajustes para a captura de templates ao vivo */
     if( context.initialTemplateCapture && 
         typeof context.initialTemplateCapture == 'object' 
     ){   
@@ -33,12 +55,7 @@ window.scanner.SerieScanner = function(classConfig)
         }
     }
 
-    /* Obtem as imagens template passadas como parametro */
-    context.templates = (classConfig['template'] || {})['templates'] || [];
-    context.templateLabels = [];
-    context.templateLabels.preenchido = false;
-
-    //Se o usuario passar um array de jsons(contendo imagem e label/nome)
+    /* Se o usuario passar um array de jsons(contendo imagem e label/nome) */
     if( context.templates.length > 0 && 
         typeof context.templates[0] == 'object' &&
         context.templates[0].image != undefined &&
@@ -58,7 +75,7 @@ window.scanner.SerieScanner = function(classConfig)
         context.templateLabels.preenchido = true;
     }
 
-    //Se o usuario passar no classConfig um Array de labels como parametro
+    /* Se o usuario passar no classConfig um Array de labels como parametro */
     if( context._template['labels'] != undefined &&
         context._template['labels'].length > 0 &&
         context.templateLabels.preenchido == false
@@ -76,30 +93,11 @@ window.scanner.SerieScanner = function(classConfig)
         });
     }
 
-    context.imagensTeste                = [];                                                                              //Vamos usar isso para armazenar as imagens que vamos testar
-    context.camera                      = classConfig['camera'] || null;
-    context._sentinel_options           = classConfig['sentinel_options'];
-    context.validation                  = classConfig['validation'] || 'percentage';
-    context.algoritmo                   = classConfig['algorithm'] || 'default';
-    context.template_appending          = context._template['keepOldTemplates'] || false;
-    context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
-    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent'];                                 //% de semelhança exigida
-    context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
-    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000;                            //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
-    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000;                          //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
-    context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
-    context.categorize                  = classConfig['categorization'] || context._template['categorize'] || {};          //Configurações de categorização
-    context.categorizeTemplates         = context.categorize['templates'] || false;
-    context.logger                      = classConfig['logger'] || { history:false }; //Configurações de logging
-    context.logger._history = [];
-    context.customCallbacks             = classConfig['callbacks'] || {}; //Callbacks personalizados
-    
+    /* Normaliza os callbacks, se necessário */
     if( Object.keys(context.customCallbacks)[0].indexOf('.') != -1 )
     {
         context.customCallbacks = context.transformarCallbacksStringEmObjetos(context.customCallbacks);
     }
-
-    context.lastResults = null;
 
     /**
     * Armazena informações sobre o Scanner 
@@ -323,6 +321,7 @@ window.scanner.SerieScanner = function(classConfig)
         context.dispararCallbackPersonalizado('test.beforeCapture');
         context.imagensTeste = await context.camera.lerSaidas(context.quantidadeImagensTeste);
         context.dispararCallbackPersonalizado('test.afterCapture');
+        return context.imagensTeste;
     }
 
     /**
@@ -700,6 +699,7 @@ window.scanner.SerieScanner = function(classConfig)
         
         return new Promise(async function(){
             context.dispararCallbackPersonalizado('scanner.currentTime.beforeScan', {});
+            debugger;
             let timeAntes = new Date().getTime();
 
             let resultadosUltimaAnalise = await context.analisarCena();
