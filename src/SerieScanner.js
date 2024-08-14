@@ -26,6 +26,12 @@ window.scanner.SerieScanner = function(classConfig)
     context.quantidadeImagensTemplate   = context._template['template_quantity'];
     context.initialTemplateCapture      = context._template['live_template'];
     context.template_appending          = context._template['keepOldTemplates'] || false;
+    context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
+    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent']; //% de semelhança exigida
+    context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
+    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000; //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
+    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000; //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
+    context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
 
     //Callbacks personalizados
     context.customCallbacks             = classConfig['callbacks'] || {};
@@ -33,13 +39,6 @@ window.scanner.SerieScanner = function(classConfig)
     {
         context.customCallbacks = context.transformarCallbacksStringEmObjetos(context.customCallbacks);
     }
-
-    context.quantidadeImagensTeste      = context._sentinel_options['test_quantity'];
-    context.porcentagem_acerto          = context._sentinel_options['acceptable_percent']; //% de semelhança exigida
-    context.liveMonitoring              = context._sentinel_options['monitoring'] || false;
-    context.mainThread_speed            = context._sentinel_options['monitoringSpeed'] || 1000; //Quanto maior este valor, mais vai demorar para os escaneamentos serem disparados
-    context.tempoAguardarRetornarImagem = context._sentinel_options['imageResponseTime'] || 1000; //As vezes é necessário aguardar um pouco, para que a imagem seja completamente carregada
-    context.stopCriterius               = context._sentinel_options['stopCriterius'] || {mode: 'someone', criterius: []};
 
     context.lastResults = null;
     context.getLast = function(){
@@ -49,9 +48,8 @@ window.scanner.SerieScanner = function(classConfig)
     //Configurações de categorização
     context.categorize                  = classConfig['categorization'] || {};
     //Se tiver o categorize habilitado dentro da configuração de template
-    if( classConfig['template']['categorize'] == true )
-    {
-        context.categorize['templates'] = true;
+    if( context._template['categorize'] == true ){ 
+        context.categorize['templates'] = true; 
     }
     context.categorizeTemplates         = context.categorize['templates'] || false;
 
@@ -99,6 +97,49 @@ window.scanner.SerieScanner = function(classConfig)
 
     context.decreaseImageResponseTime = function(quantoDiminuir=1){
         context.tempoAguardarRetornarImagem = context.tempoAguardarRetornarImagem - quantoDiminuir;
+    }
+
+    //Obtem as imagens template
+    context.templates = (classConfig['template'] || {})['templates'] || [];
+    context.templateLabels = [];
+    context.templateLabels.preenchido = false;
+
+    //Se o usuario passar um array de jsons(contendo imagem e label/nome)
+    if( context.templates.length > 0 && 
+        typeof context.templates[0] == 'object' &&
+        context.templates[0].image != undefined &&
+        context.templates[0].label != undefined
+    ){
+        //Extrai só a lista de imagens
+        context.templates = context.templates.map(function(elemento){
+            //Adiciona o label da imagem no Array de labels
+            context.templateLabels.push( elemento.label );
+
+            //Vincula o label com a imagem
+            elemento.image.label = elemento.label;
+
+            return elemento.image;
+        });
+
+        context.templateLabels.preenchido = true;
+    }
+
+    //Se o usuario passar no classConfig um Array de labels como parametro
+    if( context._template['labels'] != undefined &&
+        context._template['labels'].length > 0 &&
+        context.templateLabels.preenchido == false
+    ){
+        //Usa os labels passados
+        context.templateLabels = context._template['labels'];
+        if( context.templateLabels.length != context.templates.length )
+        {
+            throw 'Voce precisa informar N labels para as suas N imagens template!. Um label por imagem';
+        }
+
+        //Vincula o label com a imagem
+        context.templates.forEach(function(elemento, indice){
+            elemento.label = context.templateLabels[indice];
+        });
     }
 
     /**
@@ -222,49 +263,6 @@ window.scanner.SerieScanner = function(classConfig)
     }
 
     context.dispararCallbackPersonalizado('object.beforeInitialization');
-
-    //Obtem as imagens template
-    context.templates = (classConfig['template'] || {})['templates'] || [];
-    context.templateLabels = [];
-    context.templateLabels.preenchido = false;
-
-    //Se o usuario passar um array de jsons(contendo imagem e label/nome)
-    if( context.templates.length > 0 && 
-        typeof context.templates[0] == 'object' &&
-        context.templates[0].image != undefined &&
-        context.templates[0].label != undefined
-    ){
-        //Extrai só a lista de imagens
-        context.templates = context.templates.map(function(elemento){
-            //Adiciona o label da imagem no Array de labels
-            context.templateLabels.push( elemento.label );
-
-            //Vincula o label com a imagem
-            elemento.image.label = elemento.label;
-
-            return elemento.image;
-        });
-
-        context.templateLabels.preenchido = true;
-    }
-
-    //Se o usuario passar no classConfig um Array de labels como parametro
-    if( classConfig['template']['labels'] != undefined &&
-        classConfig['template']['labels'].length > 0 &&
-        context.templateLabels.preenchido == false
-    ){
-        //Usa os labels passados
-        context.templateLabels = classConfig['template']['labels'];
-        if( context.templateLabels.length != context.templates.length )
-        {
-            throw 'Voce precisa informar N labels para as suas N imagens template!. Um label por imagem';
-        }
-
-        //Vincula o label com a imagem
-        context.templates.forEach(function(elemento, indice){
-            elemento.label = context.templateLabels[indice];
-        });
-    }
 
     /**
     * Obtem N imagens da Camera, para usar como templates
