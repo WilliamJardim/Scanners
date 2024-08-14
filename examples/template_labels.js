@@ -15,7 +15,7 @@ var camera = scanner.Camera({
             /**
             * Altera o modo de validação dos resultados 
             */
-            validation: 'mostrelevant',
+            validation: 'percentage',
 
             //Configurações de template
             template: {

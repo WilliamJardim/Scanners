@@ -317,11 +317,19 @@ window.scanner.SerieScanner = function(classConfig)
     * Obtem as imagens de teste
     * @return {null}
     */
-    context.obterTargets = async function(){
-        context.dispararCallbackPersonalizado('test.beforeCapture');
-        context.imagensTeste = await context.camera.lerSaidas(context.quantidadeImagensTeste);
-        context.dispararCallbackPersonalizado('test.afterCapture');
-        return context.imagensTeste;
+    context.obterTargets = function(){
+        return new Promise(function(resolve){
+            context.dispararCallbackPersonalizado('test.beforeCapture');
+
+            context.camera.lerSaidas(context.quantidadeImagensTeste)
+            .then(function(resultadoPromise){
+                context.imagensTeste = resultadoPromise;
+                context.dispararCallbackPersonalizado('test.afterCapture');
+
+                resolve(resultadoPromise);
+            });
+
+        });
     }
 
     /**
@@ -592,25 +600,30 @@ window.scanner.SerieScanner = function(classConfig)
     */ 
     context.analisarCena = async function(){
         return new Promise(function(resolve){
-            context.obterTargets();
-        
-            setTimeout(async() => {
-                let resultados;
-                switch( context.validation ){
-                    case 'percentage':
-                    case 'limiar':
-                        resultados = await context.compararImagensObtidas_por_percentual();
-                        break;
 
-                    case 'mostrelevant':
-                    case 'mostsemelhant':
-                    case 'histogram':
-                        resultados = await context.compararImagensObtidas_por_relevancia();
-                        break;
-                }
-            
-                resolve(resultados);
-            }, 1500);
+            context.obterTargets()
+            .then(function(resultadoPromise){
+
+                setTimeout(async() => {
+                    let resultados;
+                    switch( context.validation ){
+                        case 'percentage':
+                        case 'limiar':
+                            resultados = await context.compararImagensObtidas_por_percentual();
+                            break;
+    
+                        case 'mostrelevant':
+                        case 'mostsemelhant':
+                        case 'histogram':
+                            resultados = await context.compararImagensObtidas_por_relevancia();
+                            break;
+                    }
+                
+                    resolve(resultados);
+                }, 1500);
+
+            });
+
         });
     }
 
@@ -699,7 +712,7 @@ window.scanner.SerieScanner = function(classConfig)
         
         return new Promise(async function(){
             context.dispararCallbackPersonalizado('scanner.currentTime.beforeScan', {});
-            debugger;
+            
             let timeAntes = new Date().getTime();
 
             let resultadosUltimaAnalise = await context.analisarCena();
