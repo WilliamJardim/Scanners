@@ -266,6 +266,10 @@ window.scanner.SerieScanner = function(classConfig)
         });
     }
 
+    /**
+    * Obtem N imagens da Camera, para usar como templates
+    * @returns {null} 
+    */
     context.obterTemplate = async function(){
         context.dispararCallbackPersonalizado('template.beforeCapture');
 
@@ -280,7 +284,7 @@ window.scanner.SerieScanner = function(classConfig)
         context.dispararCallbackPersonalizado('template.afterCapture');
     }
 
-    //Obtem as imagens de teste
+    /* Obtem as imagens de teste */
     context.imagensTeste = [];
     context.obterTargets = async function(){
         context.dispararCallbackPersonalizado('test.beforeCapture');
@@ -551,7 +555,9 @@ window.scanner.SerieScanner = function(classConfig)
         });
     }
 
-    //Obtem as imagens aturais e faz uma varredura nessas imagens atuais
+    /*
+    * Obtem as imagens aturais e faz uma varredura nessas imagens atuais
+    */ 
     context.analisarCena = async function(){
         return new Promise(function(resolve){
             context.obterTargets();
@@ -770,6 +776,10 @@ window.scanner.SerieScanner = function(classConfig)
         }, (context.initialTemplateCapture['wait_time'] || 500) );
     }
 
+    /**
+    * Inicia o monitoramento
+    * @returns {window.scanner.SerieScanner} - este SerieScanner
+    */
     context.start = function(){
         context.dispararCallbackPersonalizado('scanner.beforeStart');
         context._mainTheadID = window.setInterval(function(){
@@ -783,6 +793,10 @@ window.scanner.SerieScanner = function(classConfig)
         return context;
     }
 
+    /**
+    * Interrompe o monitoramento
+    * @returns {window.scanner.SerieScanner} - este SerieScanner
+    */
     context.stop = function(){
         context.dispararCallbackPersonalizado('scanner.beforeStop');
         if( context._mainTheadID ){
@@ -795,6 +809,10 @@ window.scanner.SerieScanner = function(classConfig)
         return context;
     }
 
+    /**
+    * Apaga todos os templates cadastrados
+    * @returns {window.scanner.SerieScanner} - este SerieScanner
+    */
     context.clearTemplates = function(){
         context.dispararCallbackPersonalizado('scanner.beforeClearTemplates');
         context.templates = [];
@@ -802,11 +820,12 @@ window.scanner.SerieScanner = function(classConfig)
         return context;
     }
 
+    /* Se já for iniciar monitorando, chama o start */
     if( context.liveMonitoring == true ){
         context.start();
     }
 
-    //Se for categorizar os templates
+    /* Se for categorizar os templates */
     if( context.categorizeTemplates == true ){
         context.autoClassificarImagensTemplateEntreSi();
     }
