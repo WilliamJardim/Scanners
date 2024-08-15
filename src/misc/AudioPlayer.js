@@ -47,8 +47,8 @@ scanner.misc.AudioPlayer = function(classConfig){
         }
     }
 
-    if(context.autoLoad == true){  context.loadAll() };
-    if(context.autoConfig == true){ context.configurar( context.configuracoes ) };
+    if(context.autoLoad == true && context.audioEnabled == true){  context.loadAll() };
+    if(context.autoConfig == true && context.audioEnabled == true){ context.configurar( context.configuracoes ) };
 
     return context;
 }
