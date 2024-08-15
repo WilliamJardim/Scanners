@@ -1,5 +1,5 @@
 # Scanners
-![Project Logo](https://github.com/WilliamJardim/Vectorization/blob/main/imagens/logo512x512.png)
+![Project Logo](https://github.com/WilliamJardim/Vectorization/blob/main/imagens/logo.png)
 
 Welcome to my project!
 
