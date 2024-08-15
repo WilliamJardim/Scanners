@@ -2,18 +2,6 @@
 * WilliamJardim/Scanners © 2024 by William Alves Jardim is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International. 
 * To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
 */
-//Compatibilidade com NodeJS
-if( typeof window === 'undefined' ){
-    global.window = global; 
-    
-//Se for navegador
-}else{
-    if (typeof module === 'undefined') {
-        globalThis.module = {};
-    }
-}
-
-if(!window.scanner){ window.scanner = {} };
 
 /**
  * Exemplo de uso:
