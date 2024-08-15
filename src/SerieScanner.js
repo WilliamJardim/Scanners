@@ -116,13 +116,15 @@ window.scanner.SerieScanner = function(classConfig)
         consecutiveNotMatchCount: 0
     }
 
+    /*** MÉTODOS DESSA CLASSE ABAIXO: ***/
+
     /**
     * Usa a função de download para baixar cada um dos ultimos targets testados
     */
-    context.downloadAllTargetsSerie = function(){
+    context.downloadAllTargets = function(){
         if( context.imagensTeste.length > 0 )
         {
-            context.imagensTeste.forEach( ( imgTargetBaixar )=>{ 
+            context.imagensTeste.forEach( ( imgTargetBaixar ) => { 
                 scanner.utils.imagem.baixarImagem( imgTargetBaixar ) 
             });
         }
@@ -131,7 +133,7 @@ window.scanner.SerieScanner = function(classConfig)
     /**
     * Usa a função de download para baixar cada um dos ultimos templates testados
     */
-    context.downloadAllTemplateSerie = function(){
+    context.downloadAllTemplates = function(){
         if( context.templates.length > 0 )
         {
             context.templates.forEach( ( imgTemplateBaixar ) => { 
@@ -148,8 +150,6 @@ window.scanner.SerieScanner = function(classConfig)
         context.preview.style.borderColor = color;
         context.preview.style.border = `solid 8px ${color}`;
     }
-
-    /*** MÉTODOS DESSA CLASSE ABAIXO: ***/
 
     /**
     * Obtém informações sobre o último escaneamento
