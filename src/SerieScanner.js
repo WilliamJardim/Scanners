@@ -991,30 +991,41 @@ scanner.utils = {
         
     },
 
-    extrairPixels: async function(imagem){
-        //Cria um novo canvas
-        const canvas = scanner.pagina.criarElementoHtml('canvas');
+    /**
+    * Pega uma imagem, e extrai os pixels dela, em um Array
+    * @param {Image} imagem 
+    * @returns {Object/Promise}
+    */
+    extrairPixels: function(imagem){
+        return new Promise(function(resolve){
+            //Cria um novo canvas
+            const canvas = scanner.pagina.criarElementoHtml('canvas');
 
-        canvas.aplicarAtributos({
-            width: imagem.width,
-            height: imagem.height
+            canvas.aplicarAtributos({
+                width: imagem.width,
+                height: imagem.height
+            })
+
+            document.body.appendChild(canvas.getElemento());
+
+            const ctx = canvas.getElemento()
+                            .getContext('2d');
+
+            ctx.drawImage(imagem, 0, 0, canvas.getElemento().width, canvas.getElemento().height);
+
+            let pixelData = ctx.getImageData(0, 0, canvas.getElemento().width, canvas.getElemento().height);
+            document.body.removeChild(canvas.getElemento());
+
+            const resposta = {
+                data: pixelData.data,
+            };
+
+            //Da um tempo antes de responder
+            setTimeout(function(){
+                resolve(resposta);
+
+            }, 10);
         })
-
-        document.body.appendChild(canvas.getElemento());
-
-        const ctx = canvas.getElemento()
-                          .getContext('2d');
-
-        ctx.drawImage(imagem, 0, 0, canvas.getElemento().width, canvas.getElemento().height);
-
-        let pixelData = ctx.getImageData(0, 0, canvas.getElemento().width, canvas.getElemento().height);
-        document.body.removeChild(canvas.getElemento());
-
-        const resposta = {
-            data: pixelData.data,
-        };
-
-        return resposta;
     },
 
     /**
