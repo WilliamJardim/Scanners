@@ -1,5 +1,13 @@
 TODO
 FEITO
+notas
+./notas
+notas/
+./notas/
+notas/*
+./notas/*
+notas/TODO
+notas/FEITO
 src-antigo-testes.zip
 src/SerieScanner.old.js
 ./src/SerieScanner.old.js
