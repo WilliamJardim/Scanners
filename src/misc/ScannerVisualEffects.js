@@ -3,3 +3,7 @@
 * To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
 */
 
+scanner.misc.ScannerVisualEffects = function(classConfig){
+    const context = scanner.Base(classConfig);
+    return context;
+}
