@@ -1,4 +1,4 @@
-var resultado = scanner.pagina.criarElementoHtml('div');
+var resultado = scanner.utils.pagina.criarElementoHtml('div');
 document.getElementById('corpo').appendChild( resultado.getElemento() );
 
 var camera = scanner.Camera({ 
@@ -20,8 +20,8 @@ var camera = scanner.Camera({
             * @returns {Object}
             */
             algorithm: async function(imagem1, imagem2, porcentagemAceito){
-                const A = imagem1 instanceof Array ? imagem1 : (await scanner.utils.extrairPixels(imagem1)).data;
-                const B = imagem2 instanceof Array ? imagem2 : (await scanner.utils.extrairPixels(imagem2)).data;
+                const A = imagem1 instanceof Array ? imagem1 : (await scanner.utils.imagem.extrairPixels(imagem1)).data;
+                const B = imagem2 instanceof Array ? imagem2 : (await scanner.utils.imagem.extrairPixels(imagem2)).data;
                 let equal = 0;
                 let different = 0;
                 let ignored = 0;

@@ -61,12 +61,21 @@ window.scanner.Camera = function(classConfig={})
     context.inicializado = false;
     context.inserido = false;
 
+    context.configuracoesUsadas = { 
+        video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 },
+            facingMode: context.modo || 'user'
+        } 
+    }
+
     /**
     * Cria a instancia que recebe as capturas
     * @returns {HTMLVideoElement}
     */
     context._criarGravador = function(){
-        context.gravadorControle = scanner.pagina.criarElementoHtml('video', 'video'+instanciaId);
+        context.gravadorControle = scanner.utils.pagina.criarElementoHtml('video', 'video'+instanciaId);
         context.gravadorControle.ocultar();
         context.gravador = context.gravadorControle.getElemento();
 
@@ -78,7 +87,8 @@ window.scanner.Camera = function(classConfig={})
     * @returns {HTMLCanvasElement}
     */
     context._criarCanvas = function(){
-        context.canvasControle = scanner.pagina.criarElementoHtml('canvas', 'canvas'+instanciaId);
+        context.idInstanciaCanvas = 'canvas'+instanciaId;
+        context.canvasControle = scanner.utils.pagina.criarElementoHtml('canvas', context.idInstanciaCanvas);
         context.canvasControle.estilizar({
             width: '600px',
             height: '400px'
@@ -87,15 +97,6 @@ window.scanner.Camera = function(classConfig={})
         context.canvasContext = context.canvas.getContext('2d');
 
         return context.canvas;
-    }
-    
-    context.configuracoesUsadas = { 
-        video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 },
-            facingMode: context.modo || 'user'
-        } 
     }
 
     /**
@@ -154,7 +155,7 @@ window.scanner.Camera = function(classConfig={})
 
     /**
     * Obtem uma imagem interna do tipo ResultadoCamera
-    * @returns {scanner.pagina.ResultadoCamera}
+    * @returns {scanner.utils.pagina.ResultadoCamera}
     */
     context.lerSaida = function(){
         if(context.inicializado == false){ throw 'O objeto precisa estar iniciado!' };
@@ -164,7 +165,7 @@ window.scanner.Camera = function(classConfig={})
                 context.canvasContext.drawImage(context.gravador, 0, 0, context.canvas.width, context.canvas.height);
             } 
             
-            scanner.pagina.ResultadoCamera({
+            scanner.utils.imagem.ResultadoCamera({
                 canvas_resultado: context.canvas
 
             }).then(function(resultadoResultado){
@@ -177,7 +178,7 @@ window.scanner.Camera = function(classConfig={})
 
     /**
     * Obtem N imagens internas do tipo ResultadoCamera
-    * @returns {scanner.pagina.ResultadoCamera}
+    * @returns {scanner.utils.pagina.ResultadoCamera}
     */
     context.lerSaidas = function(quantidadeOutputs){
         return new Promise(function(resolve){
@@ -247,6 +248,42 @@ window.scanner.Camera = function(classConfig={})
     if( context.autoAdicionar == true ){ context.iniciar() };
 
     return context;
+}
+
+/** MÉTODOS ESTÀTICOS */
+
+/**
+* Fornece um objeto simples para armazenar o resultado da saida da camera
+* Permitindo facilmente obter informações
+* @param {Object} classConfig 
+* @returns {scanner.utils.pagina.ResultadoCamera}
+*/
+scanner.utils.imagem.ResultadoCamera = function(classConfig){
+    return new Promise(function(resolve){
+        const context = scanner.Base( classConfig );
+
+        context.canvas_resultado = classConfig['canvas_resultado'];
+        context.base64 = classConfig['base64'] || context.canvas_resultado.toDataURL();
+        
+        scanner.utils.imagem.criarImagem( context.base64 )
+        .then( function(imagemCriada){
+            context.imagem = imagemCriada;
+
+            context.getImagem = function(){
+                return context.imagem;
+            }
+    
+            context.getBase64 = function(){
+                return context.base64;
+            }
+    
+            context.getCanvas = function(){
+                return context.canvas_resultado;
+            }
+
+            resolve(context);
+        } );
+    });
 }
 
 module.exports = window.scanner.Camera;
