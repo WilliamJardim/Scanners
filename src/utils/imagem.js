@@ -90,7 +90,7 @@ scanner.utils.imagem = {
             imagem.setAttribute("id", instanciaId);
 
             imagem.onload = function(){
-                resolve(this); 
+                resolve(imagem); 
             }
 
             setTimeout(function(){
@@ -99,7 +99,7 @@ scanner.utils.imagem = {
 
             //Função para evitar enrosco
             setTimeout(function(){
-                resolve(this); 
+                resolve(imagem); 
             }, 3000);
 
         });
@@ -126,7 +126,7 @@ scanner.utils.imagem = {
                                                                    canvas.getElemento()
                                                                          .toDataURL() 
                                                                  );
-           	
+                                                                   
             resolve(imagemCortada);        
         });
         
@@ -140,32 +140,44 @@ scanner.utils.imagem = {
     extrairPixels: function(imagem){
         return new Promise(function(resolve){
             //Cria um novo canvas
-            const canvas = scanner.utils.pagina.criarElementoHtml('canvas');
-
-            canvas.aplicarAtributos({
-                width: imagem.width,
-                height: imagem.height
-            })
-
+            const canvas = scanner.utils.pagina.criarElementoHtml('canvas', String(new Date().getTime()) );
             document.body.appendChild(canvas.getElemento());
 
-            const ctx = canvas.getElemento()
-                            .getContext('2d');
-
-            ctx.drawImage(imagem, 0, 0, canvas.getElemento().width, canvas.getElemento().height);
-
-            let pixelData = ctx.getImageData(0, 0, canvas.getElemento().width, canvas.getElemento().height);
-            document.body.removeChild(canvas.getElemento());
-
-            const resposta = {
-                data: pixelData.data,
-            };
-
-            //Da um tempo antes de responder
             setTimeout(function(){
-                resolve(resposta);
+                canvas.aplicarAtributos({
+                    width: imagem.width,
+                    height: imagem.height
+                })
+    
+                setTimeout(function(){
+                    const ctx = canvas.getElemento()
+                                .getContext('2d');
+    
+                    setTimeout(function(){
+                        ctx.drawImage(imagem.imagem, 0, 0, canvas.getElemento().width, canvas.getElemento().height);
+        
+                        setTimeout(function(){
+                            
+                            let pixelData = ctx.getImageData(0, 0, canvas.getElemento().width, canvas.getElemento().height);
+                            document.body.removeChild(canvas.getElemento());
+                
+                            const resposta = {
+                                data: pixelData.data,
+                            };
+                
+                            //Da um tempo antes de responder
+                            setTimeout(function(){
+                                resolve(resposta);
+                
+                            }, 100);
 
-            }, 10);
+                        }, 200)
+
+                    }, 100);
+
+                }, 200)
+
+            },50)
         })
     },
 

@@ -48,6 +48,7 @@ scanner.utils.pagina = {
             for( let i = 0 ; i < keys.length ; i++ )
             {
                 context.elemento[ keys[i] ] = aplicarConfig[ keys[i] ];
+                context.elemento.setAttribute( keys[i], aplicarConfig[ keys[i] ] )
             }
 
             return context;
