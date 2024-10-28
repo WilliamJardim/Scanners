@@ -97,6 +97,11 @@ scanner.utils.imagem = {
                 imagem.src = dataUrl;
             }, 100);
 
+            //Função para evitar enrosco
+            setTimeout(function(){
+                resolve(this); 
+            }, 3000);
+
         });
 
     },
